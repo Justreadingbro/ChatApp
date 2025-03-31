@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #chat-box { width: 300px; height: 400px; overflow-y: scroll; border: 1px solid #ccc; margin: auto; padding: 10px; }
+        #message { width: 80%; padding: 5px; }
+        button { padding: 5px; }
+    </style>
+</head>
+<body>
+    <h2>ChatApp</h2>
+    <button onclick="signIn()">Sign in with Google</button>
+    <button onclick="signOut()">Sign Out</button>
+    <p id="user-info">Not signed in</p>
+    <div id="chat-box"></div>
+    <input type="text" id="message" placeholder="Type a message...">
+    <button onclick="sendMessage()">Send</button>
+
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
+        import { getDatabase, ref, push, set, onChildAdded } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-database.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyD6-T72JumNiIVC8OLpNrMFsaHRNWARUm4",
+            authDomain: "chatapp-25a67.firebaseapp.com",
+            databaseURL: "https://chatapp-25a67-default-rtdb.firebaseio.com",
+            projectId: "chatapp-25a67",
+            storageBucket: "chatapp-25a67.appspot.com",
+            messagingSenderId: "410550401595",
+            appId: "1:410550401595:web:c957ad380fb3da4dc53a1e",
+            measurementId: "G-SD8H7ZTFMW"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+        const provider = new GoogleAuthProvider();
+
+        let currentUser = null;
+
+        // Sign in with Google
+        window.signIn = async function () {
+            try {
+                const result = await signInWithPopup(auth, provider);
+                currentUser = result.user;
+                document.getElementById("user-info").innerText = `Signed in as: ${currentUser.displayName}`;
+            } catch (error) {
+                console.error("Sign-in error:", error);
+            }
+        };
+
+        // Sign out
+        window.signOut = async function () {
+            try {
+                await signOut(auth);
+                currentUser = null;
+                document.getElementById("user-info").innerText = "Not signed in";
+            } catch (error) {
+                console.error("Sign-out error:", error);
+            }
+        };
+
+        // Send message
+        window.sendMessage = function () {
+            if (!currentUser) {
+                alert("Please sign in to send messages.");
+                return;
+            }
+            const messageInput = document.getElementById("message");
+            const message = messageInput.value.trim();
+            if (message !== "") {
+                const messagesRef = ref(database, "messages");
+                const newMessageRef = push(messagesRef);
+                set(newMessageRef, {
+                    text: message,
+                    user: currentUser.displayName,
+                    timestamp: Date.now()
+                });
+                messageInput.value = "";
+            }
+        };
+
+        // Listen for new messages
+        const messagesRef = ref(database, "messages");
+        onChildAdded(messagesRef, (snapshot) => {
+            const msg = snapshot.val();
+            const chatBox = document.getElementById("chat-box");
+            chatBox.innerHTML += `<p><strong>${msg.user}:</strong> ${msg.text}</p>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+    </script>
+</body>
+</html>
