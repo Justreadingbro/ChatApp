@@ -7,7 +7,10 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap"
+    rel="stylesheet"
+  />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; }
@@ -132,56 +135,33 @@
       display: flex;
       align-items: center;
       margin: 10px;
-      position: relative;
+      gap: 4px;
     }
     #message {
       flex: 1;
       padding: 10px;
       border: 1px solid #ddd;
-      border-radius: 20px 0 0 20px;
+      border-radius: 20px;
       outline: none;
       font-size: 16px;
     }
-    .send-btn, .attach-btn {
+    .send-btn {
       padding: 10px 12px;
       border: 1px solid #ddd;
       background: #667eea;
       color: #fff;
       cursor: pointer;
-      border-radius: 0 20px 20px 0;
+      border-radius: 20px;
       transition: background 0.3s;
       font-size: 16px;
+      white-space: nowrap;
     }
-    .send-btn:hover, .attach-btn:hover { background: #5a67d8; }
-    .attach-btn {
-      border-radius: 20px;
-      margin-right: 8px;
-    }
-    /* Attachment menu (dropdown) */
-    #attachment-menu {
-      display: none;
-      position: absolute;
-      bottom: 60px;
-      left: 20px;
-      background: #fff;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-      z-index: 5;
-    }
-    #attachment-menu button {
-      display: block;
-      width: 100%;
-      padding: 8px 12px;
-      border: none;
-      background: none;
-      text-align: left;
-      cursor: pointer;
-    }
-    #attachment-menu button:hover { background: #f1f1f1; }
+    .send-btn:hover { background: #5a67d8; }
     @media (max-width: 500px) {
       header h2 { font-size: 1.2em; }
       #user-pic { width: 35px; height: 35px; }
+      .send-btn { padding: 8px 10px; font-size: 14px; }
+      #message { font-size: 14px; }
     }
     /* Profile Modal */
     #profile-modal {
@@ -242,14 +222,8 @@
   <div class="chat-container">
     <div id="chat-box"></div>
     <div class="input-group">
-      <button class="attach-btn" onclick="toggleAttachmentMenu(event)">📎</button>
       <input type="text" id="message" placeholder="Type a message..." />
       <button class="send-btn" onclick="sendMessage()">Send</button>
-      <!-- Attachment dropdown -->
-      <div id="attachment-menu">
-        <button onclick="uploadImage()">Image</button>
-        <button onclick="uploadDocument()">Document</button>
-      </div>
     </div>
   </div>
   <!-- Profile Modal -->
@@ -266,16 +240,13 @@
       <button onclick="closeProfileMenu()">Close</button>
     </div>
   </div>
-  <!-- Hidden file inputs -->
+  <!-- Hidden file input for profile upload -->
   <input type="file" id="profile-upload" accept="image/*" style="display:none" />
-  <input type="file" id="image-upload" accept="image/*" style="display:none" />
-  <input type="file" id="document-upload" accept="application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, text/plain" style="display:none" />
   
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
     import { getDatabase, ref, push, set, onChildAdded } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-database.js";
-    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-storage.js";
     
     const firebaseConfig = {
       apiKey: "AIzaSyD6-T72JumNiIVC8OLpNrMFsaHRNWARUm4",
@@ -291,7 +262,6 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const database = getDatabase(app);
-    const storage = getStorage(app);
     const provider = new GoogleAuthProvider();
     
     let currentUser = null;
@@ -367,7 +337,7 @@
       const msg = snapshot.val();
       const chatBox = document.getElementById("chat-box");
       const messageEl = document.createElement("div");
-      // Determine message alignment using uid if available
+      // Use uid for alignment if available
       if (currentUser && msg.uid) {
         messageEl.className = (msg.uid === currentUser.uid) ? "message sent" : "message received";
       } else if (currentUser) {
@@ -375,17 +345,8 @@
       } else {
         messageEl.className = "message received";
       }
-      // Render message based on type
       if (msg.type === "text") {
         messageEl.innerHTML = `<strong>${msg.user}:</strong> ${msg.text}
-          <div class="timestamp">${new Date(msg.timestamp).toLocaleTimeString()}</div>`;
-      } else if (msg.type === "image") {
-        messageEl.innerHTML = `<strong>${msg.user}:</strong><br>
-          <img src="${msg.url}" alt="Image" style="max-width:200px; border-radius:8px;"/>
-          <div class="timestamp">${new Date(msg.timestamp).toLocaleTimeString()}</div>`;
-      } else if (msg.type === "document") {
-        messageEl.innerHTML = `<strong>${msg.user}:</strong><br>
-          <a href="${msg.url}" target="_blank" style="text-decoration:none;">📄 ${msg.docName || "Document"}</a>
           <div class="timestamp">${new Date(msg.timestamp).toLocaleTimeString()}</div>`;
       }
       chatBox.appendChild(messageEl);
@@ -406,71 +367,6 @@
       const sidebar = document.getElementById("sidebar");
       if (!sidebar.contains(e.target) && !document.getElementById("menu-btn").contains(e.target)) {
         sidebar.classList.remove("open");
-      }
-      // Also hide attachment menu if clicking outside
-      const attMenu = document.getElementById("attachment-menu");
-      if (!attMenu.contains(e.target) && e.target.id !== "attach-btn") {
-        attMenu.style.display = "none";
-      }
-    });
-    
-    // Attachment menu functions
-    window.toggleAttachmentMenu = function(e) {
-      e.stopPropagation();
-      const attMenu = document.getElementById("attachment-menu");
-      attMenu.style.display = (attMenu.style.display === "block") ? "none" : "block";
-    };
-    
-    window.uploadImage = function() {
-      document.getElementById("attachment-menu").style.display = "none";
-      document.getElementById("image-upload").click();
-    };
-    
-    window.uploadDocument = function() {
-      document.getElementById("attachment-menu").style.display = "none";
-      document.getElementById("document-upload").click();
-    };
-    
-    document.getElementById("image-upload").addEventListener("change", async function(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      try {
-        const fileRef = storageRef(storage, `attachments/images/${currentUser.uid}_${Date.now()}`);
-        const snapshot = await uploadBytes(fileRef, file);
-        const downloadURL = await getDownloadURL(snapshot.ref);
-        const messagesRef = ref(database, "messages");
-        const newMessageRef = push(messagesRef);
-        await set(newMessageRef, {
-          type: "image",
-          url: downloadURL,
-          user: currentUser.displayName,
-          uid: currentUser.uid,
-          timestamp: Date.now()
-        });
-      } catch (error) {
-        console.error("Image upload error:", error);
-      }
-    });
-    
-    document.getElementById("document-upload").addEventListener("change", async function(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      try {
-        const fileRef = storageRef(storage, `attachments/documents/${currentUser.uid}_${Date.now()}_${file.name}`);
-        const snapshot = await uploadBytes(fileRef, file);
-        const downloadURL = await getDownloadURL(snapshot.ref);
-        const messagesRef = ref(database, "messages");
-        const newMessageRef = push(messagesRef);
-        await set(newMessageRef, {
-          type: "document",
-          url: downloadURL,
-          docName: file.name,
-          user: currentUser.displayName,
-          uid: currentUser.uid,
-          timestamp: Date.now()
-        });
-      } catch (error) {
-        console.error("Document upload error:", error);
       }
     });
     
