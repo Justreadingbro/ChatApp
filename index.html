@@ -2,116 +2,120 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <!-- Important for responsive scaling on mobile -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Modern Chat App</title>
   <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
     href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap"
     rel="stylesheet"
   />
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Roboto', sans-serif;
       background: linear-gradient(135deg, #667eea, #764ba2);
       min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .chat-container {
-      background: #fff;
-      width: 90%;                /* Responsive width */
-      max-width: 450px;         /* Larger max width for bigger screens */
-      height: 80vh;             /* Occupies 80% of the viewport height */
-      min-height: 450px;        /* Ensures a comfortable minimum height */
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      padding: 20px;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
     }
+    /* Header */
     header {
-      text-align: center;
-      margin-bottom: 15px;
+      background: #fff;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      position: relative;
+      z-index: 2;
+    }
+    #menu-btn {
+      font-size: 24px;
+      background: none;
+      border: none;
+      cursor: pointer;
     }
     header h2 {
       font-size: 1.5em;
-      margin-bottom: 8px;
       color: #333;
+      text-align: center;
+      flex: 1;
     }
-    .btn-group {
+    #user-pic {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      cursor: pointer;
+    }
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: -250px;
+      width: 250px;
+      height: 100%;
+      background: #fff;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+      padding: 20px;
       display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 15px;
+      flex-direction: column;
+      gap: 15px;
+      transition: left 0.3s ease;
+      z-index: 3;
     }
-    button {
-      padding: 8px 12px;
+    .sidebar.open { left: 0; }
+    .sidebar button {
+      padding: 10px;
+      font-size: 16px;
       border: none;
       border-radius: 4px;
-      background-color: #667eea;
+      background: #667eea;
       color: #fff;
       cursor: pointer;
       transition: background 0.3s;
-      font-size: 16px; /* Ensures no mobile zoom on tap */
     }
-    button:hover {
-      background-color: #5a67d8;
-    }
-    #user-info {
+    .sidebar button:hover { background: #5a67d8; }
+    /* Chat container */
+    .chat-container {
+      background: #fff;
+      width: 90%;
+      max-width: 450px;
+      height: calc(100vh - 60px);
+      margin: 10px auto;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
       display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 10px;
-      font-weight: 500;
-      color: #444;
-    }
-    #user-info img {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      margin-right: 8px;
+      flex-direction: column;
+      overflow: hidden;
     }
     #chat-box {
-      flex: 1;                  /* Fills remaining vertical space */
+      flex: 1;
       border: 1px solid #ddd;
       border-radius: 4px;
       padding: 10px;
-      overflow-y: auto;         /* Only chat box scrolls */
-      margin-bottom: 10px;
+      overflow-y: auto;
       background: #f9f9f9;
+      margin: 10px;
     }
-    /* Custom scrollbar for chat box */
-    #chat-box::-webkit-scrollbar {
-      width: 8px;
-    }
-    #chat-box::-webkit-scrollbar-track {
-      background: #f1f1f1;
-    }
+    /* Custom scrollbar */
+    #chat-box::-webkit-scrollbar { width: 8px; }
+    #chat-box::-webkit-scrollbar-track { background: #f1f1f1; }
     #chat-box::-webkit-scrollbar-thumb {
       background: #888;
       border-radius: 4px;
     }
-    #chat-box::-webkit-scrollbar-thumb:hover {
-      background: #555;
-    }
+    #chat-box::-webkit-scrollbar-thumb:hover { background: #555; }
     .message {
       margin-bottom: 10px;
       padding: 6px 8px;
       background: #e9e9e9;
       border-radius: 4px;
     }
-    .message strong {
-      color: #333;
-    }
+    .message strong { color: #333; }
     .timestamp {
       font-size: 0.75em;
       color: #666;
@@ -120,17 +124,18 @@
     }
     .input-group {
       display: flex;
+      margin: 10px;
     }
     #message {
       flex: 1;
-      padding: 8px;
+      padding: 10px;
       border: 1px solid #ddd;
       border-radius: 4px 0 0 4px;
       outline: none;
-      font-size: 16px; /* Prevents mobile zoom */
+      font-size: 16px;
     }
     .send-btn {
-      padding: 8px 12px;
+      padding: 10px 12px;
       border: 1px solid #ddd;
       border-left: none;
       background: #667eea;
@@ -138,34 +143,43 @@
       cursor: pointer;
       border-radius: 0 4px 4px 0;
       transition: background 0.3s;
-      font-size: 16px; /* Matches input to avoid zoom on focus */
+      font-size: 16px;
     }
-    .send-btn:hover {
-      background: #5a67d8;
+    .send-btn:hover { background: #5a67d8; }
+    @media (max-width: 500px) {
+      header h2 { font-size: 1.2em; }
+      #user-pic { width: 35px; height: 35px; }
     }
   </style>
 </head>
 <body>
+  <!-- Sidebar -->
+  <div id="sidebar" class="sidebar">
+    <button onclick="signIn()">Sign in with Google</button>
+    <button onclick="signOut()">Sign Out</button>
+  </div>
+  <!-- Header -->
+  <header>
+    <button id="menu-btn" onclick="toggleSidebar(event)">&#9776;</button>
+    <h2>Modern Chat App</h2>
+    <img id="user-pic" src="https://via.placeholder.com/40?text=User" alt="User Profile" onclick="triggerUpload()" />
+  </header>
+  <!-- Chat container -->
   <div class="chat-container">
-    <header>
-      <h2>Modern Chat App</h2>
-    </header>
-    <div class="btn-group">
-      <button onclick="signIn()">Sign in with Google</button>
-      <button onclick="signOut()">Sign Out</button>
-    </div>
-    <div id="user-info">Not signed in</div>
     <div id="chat-box"></div>
     <div class="input-group">
-      <input type="text" id="message" placeholder="Type a message..."/>
+      <input type="text" id="message" placeholder="Type a message..." />
       <button class="send-btn" onclick="sendMessage()">Send</button>
     </div>
   </div>
+  <!-- Hidden file input for profile upload -->
+  <input type="file" id="profile-upload" accept="image/*" style="display:none" />
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
     import { getDatabase, ref, push, set, onChildAdded } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-database.js";
+    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-storage.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyD6-T72JumNiIVC8OLpNrMFsaHRNWARUm4",
@@ -181,6 +195,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const database = getDatabase(app);
+    const storage = getStorage(app);
     const provider = new GoogleAuthProvider();
 
     let currentUser = null;
@@ -199,23 +214,19 @@
       try {
         await signOut(auth);
         currentUser = null;
-        document.getElementById("user-info").textContent = "Not signed in";
+        document.getElementById("user-pic").src = "https://via.placeholder.com/40?text=User";
       } catch (error) {
         console.error("Sign-out error:", error);
       }
     };
 
     function updateUserInfo(user) {
-      const infoDiv = document.getElementById("user-info");
-      infoDiv.innerHTML = "";
+      const userPic = document.getElementById("user-pic");
       if (user.photoURL) {
-        const img = document.createElement("img");
-        img.src = user.photoURL;
-        infoDiv.appendChild(img);
+        userPic.src = user.photoURL;
+      } else {
+        userPic.src = "https://via.placeholder.com/40?text=User";
       }
-      const span = document.createElement("span");
-      span.innerText = `Signed in as: ${user.displayName}`;
-      infoDiv.appendChild(span);
     }
 
     window.sendMessage = function () {
@@ -251,8 +262,39 @@
     });
 
     document.getElementById("message").addEventListener("keypress", (e) => {
-      if (e.key === "Enter") {
-        sendMessage();
+      if (e.key === "Enter") { sendMessage(); }
+    });
+
+    window.toggleSidebar = function (e) {
+      e.stopPropagation();
+      const sidebar = document.getElementById("sidebar");
+      sidebar.classList.toggle("open");
+    };
+
+    document.addEventListener("click", function (e) {
+      const sidebar = document.getElementById("sidebar");
+      if (!sidebar.contains(e.target) && !document.getElementById("menu-btn").contains(e.target)) {
+        sidebar.classList.remove("open");
+      }
+    });
+
+    // Profile picture upload
+    function triggerUpload() {
+      if (!currentUser) return;
+      document.getElementById("profile-upload").click();
+    }
+
+    document.getElementById("profile-upload").addEventListener("change", async function (e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        const fileRef = storageRef(storage, `profilePictures/${currentUser.uid}`);
+        const snapshot = await uploadBytes(fileRef, file);
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        await updateProfile(currentUser, { photoURL: downloadURL });
+        document.getElementById("user-pic").src = downloadURL;
+      } catch (error) {
+        console.error("Profile update error:", error);
       }
     });
   </script>
