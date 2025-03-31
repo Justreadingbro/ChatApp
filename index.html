@@ -4,13 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Modern Chat App</title>
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap"
-    rel="stylesheet"
-  />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -21,7 +17,6 @@
       display: flex;
       flex-direction: column;
     }
-    /* Header */
     header {
       background: #fff;
       padding: 10px 20px;
@@ -51,7 +46,6 @@
       object-fit: cover;
       cursor: pointer;
     }
-    /* Sidebar */
     .sidebar {
       position: fixed;
       top: 0;
@@ -79,7 +73,6 @@
       transition: background 0.3s;
     }
     .sidebar button:hover { background: #5a67d8; }
-    /* Chat container */
     .chat-container {
       background: #fff;
       width: 90%;
@@ -101,7 +94,6 @@
       background: #f9f9f9;
       margin: 10px;
     }
-    /* Custom scrollbar */
     #chat-box::-webkit-scrollbar { width: 8px; }
     #chat-box::-webkit-scrollbar-track { background: #f1f1f1; }
     #chat-box::-webkit-scrollbar-thumb {
@@ -150,21 +142,58 @@
       header h2 { font-size: 1.2em; }
       #user-pic { width: 35px; height: 35px; }
     }
+    #profile-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      align-items: center; justify-content: center;
+      z-index: 4;
+    }
+    #profile-modal .modal-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    #profile-modal .modal-content h3 {
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    #profile-modal .modal-content img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      align-self: center;
+    }
+    #profile-modal .modal-content button {
+      padding: 10px;
+      border: none;
+      border-radius: 4px;
+      background: #667eea;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    #profile-modal .modal-content button:hover { background: #5a67d8; }
   </style>
 </head>
 <body>
-  <!-- Sidebar -->
   <div id="sidebar" class="sidebar">
     <button onclick="signIn()">Sign in with Google</button>
     <button onclick="signOut()">Sign Out</button>
   </div>
-  <!-- Header -->
   <header>
     <button id="menu-btn" onclick="toggleSidebar(event)">&#9776;</button>
     <h2>Modern Chat App</h2>
-    <img id="user-pic" src="https://via.placeholder.com/40?text=User" alt="User Profile" onclick="triggerUpload()" />
+    <img id="user-pic" src="https://via.placeholder.com/40?text=User" alt="User Profile" onclick="openProfileMenu()" />
   </header>
-  <!-- Chat container -->
   <div class="chat-container">
     <div id="chat-box"></div>
     <div class="input-group">
@@ -172,15 +201,26 @@
       <button class="send-btn" onclick="sendMessage()">Send</button>
     </div>
   </div>
-  <!-- Hidden file input for profile upload -->
+  <div id="profile-modal">
+    <div class="modal-content">
+      <h3>User Profile</h3>
+      <img id="modal-user-pic" src="https://via.placeholder.com/80?text=User" alt="Profile Picture" />
+      <div id="user-details">
+        <p id="user-name"></p>
+        <p id="user-email"></p>
+      </div>
+      <button onclick="triggerUpload()">Change Profile Picture</button>
+      <button onclick="goHome()">Home</button>
+      <button onclick="closeProfileMenu()">Close</button>
+    </div>
+  </div>
   <input type="file" id="profile-upload" accept="image/*" style="display:none" />
-
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
     import { getDatabase, ref, push, set, onChildAdded } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-database.js";
     import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-storage.js";
-
+    
     const firebaseConfig = {
       apiKey: "AIzaSyD6-T72JumNiIVC8OLpNrMFsaHRNWARUm4",
       authDomain: "chatapp-25a67.firebaseapp.com",
@@ -191,35 +231,39 @@
       appId: "1:410550401595:web:c957ad380fb3da4dc53a1e",
       measurementId: "G-SD8H7ZTFMW"
     };
-
+    
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const database = getDatabase(app);
     const storage = getStorage(app);
     const provider = new GoogleAuthProvider();
-
+    
     let currentUser = null;
-
+    
     window.signIn = async function () {
       try {
         const result = await signInWithPopup(auth, provider);
         currentUser = result.user;
         updateUserInfo(currentUser);
+        updateModalInfo(currentUser);
       } catch (error) {
         console.error("Sign-in error:", error);
       }
     };
-
+    
     window.signOut = async function () {
       try {
         await signOut(auth);
         currentUser = null;
         document.getElementById("user-pic").src = "https://via.placeholder.com/40?text=User";
+        document.getElementById("modal-user-pic").src = "https://via.placeholder.com/80?text=User";
+        document.getElementById("user-name").textContent = "";
+        document.getElementById("user-email").textContent = "";
       } catch (error) {
         console.error("Sign-out error:", error);
       }
     };
-
+    
     function updateUserInfo(user) {
       const userPic = document.getElementById("user-pic");
       if (user.photoURL) {
@@ -228,7 +272,20 @@
         userPic.src = "https://via.placeholder.com/40?text=User";
       }
     }
-
+    
+    function updateModalInfo(user) {
+      const modalUserPic = document.getElementById("modal-user-pic");
+      const userName = document.getElementById("user-name");
+      const userEmail = document.getElementById("user-email");
+      if (user.photoURL) {
+        modalUserPic.src = user.photoURL;
+      } else {
+        modalUserPic.src = "https://via.placeholder.com/80?text=User";
+      }
+      userName.textContent = user.displayName || "Anonymous";
+      userEmail.textContent = user.email || "";
+    }
+    
     window.sendMessage = function () {
       if (!currentUser) {
         alert("Please sign in to send messages.");
@@ -247,7 +304,7 @@
         messageInput.value = "";
       }
     };
-
+    
     onChildAdded(ref(database, "messages"), (snapshot) => {
       const msg = snapshot.val();
       const chatBox = document.getElementById("chat-box");
@@ -260,30 +317,43 @@
       chatBox.appendChild(messageEl);
       chatBox.scrollTop = chatBox.scrollHeight;
     });
-
+    
     document.getElementById("message").addEventListener("keypress", (e) => {
       if (e.key === "Enter") { sendMessage(); }
     });
-
+    
     window.toggleSidebar = function (e) {
       e.stopPropagation();
       const sidebar = document.getElementById("sidebar");
       sidebar.classList.toggle("open");
     };
-
+    
     document.addEventListener("click", function (e) {
       const sidebar = document.getElementById("sidebar");
       if (!sidebar.contains(e.target) && !document.getElementById("menu-btn").contains(e.target)) {
         sidebar.classList.remove("open");
       }
     });
-
-    // Profile picture upload
-    function triggerUpload() {
+    
+    window.openProfileMenu = function () {
+      if (!currentUser) return;
+      updateModalInfo(currentUser);
+      document.getElementById("profile-modal").style.display = "flex";
+    };
+    
+    window.closeProfileMenu = function () {
+      document.getElementById("profile-modal").style.display = "none";
+    };
+    
+    window.goHome = function () {
+      closeProfileMenu();
+    };
+    
+    window.triggerUpload = function () {
       if (!currentUser) return;
       document.getElementById("profile-upload").click();
-    }
-
+    };
+    
     document.getElementById("profile-upload").addEventListener("change", async function (e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -293,6 +363,7 @@
         const downloadURL = await getDownloadURL(snapshot.ref);
         await updateProfile(currentUser, { photoURL: downloadURL });
         document.getElementById("user-pic").src = downloadURL;
+        document.getElementById("modal-user-pic").src = downloadURL;
       } catch (error) {
         console.error("Profile update error:", error);
       }
