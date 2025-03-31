@@ -2,16 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Modern Chat App</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link
     href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap"
     rel="stylesheet"
   />
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
     body {
       font-family: 'Roboto', sans-serif;
       background: linear-gradient(135deg, #667eea, #764ba2);
@@ -19,11 +24,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #333;
+      overflow: hidden; /* Prevents body scrolling */
     }
     .chat-container {
       background: #fff;
-      width: 350px;
+      width: 400px;              /* Increase width for larger chat area */
+      height: 80vh;             /* Occupies 80% of screen height */
+      min-height: 600px;        /* Ensures a comfortable minimum height */
       max-width: 90%;
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
@@ -39,18 +46,6 @@
       font-size: 1.5em;
       margin-bottom: 8px;
       color: #333;
-    }
-    #user-info {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 10px;
-    }
-    #user-info img {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      margin-right: 8px;
     }
     .btn-group {
       display: flex;
@@ -70,14 +65,42 @@
     button:hover {
       background-color: #5a67d8;
     }
+    #user-info {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 10px;
+      font-weight: 500;
+      color: #444;
+    }
+    #user-info img {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
     #chat-box {
-      flex: 1;
+      flex: 1;                  /* Fills remaining vertical space */
       border: 1px solid #ddd;
       border-radius: 4px;
       padding: 10px;
-      overflow-y: auto;
+      overflow-y: auto;         /* Only chat box scrolls */
       margin-bottom: 10px;
       background: #f9f9f9;
+    }
+    /* Custom scrollbar for chat box */
+    #chat-box::-webkit-scrollbar {
+      width: 8px;
+    }
+    #chat-box::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+    #chat-box::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 4px;
+    }
+    #chat-box::-webkit-scrollbar-thumb:hover {
+      background: #555;
     }
     .message {
       margin-bottom: 10px;
@@ -85,7 +108,9 @@
       background: #e9e9e9;
       border-radius: 4px;
     }
-    .message strong { color: #333; }
+    .message strong {
+      color: #333;
+    }
     .timestamp {
       font-size: 0.75em;
       color: #666;
@@ -129,7 +154,7 @@
     <div id="user-info">Not signed in</div>
     <div id="chat-box"></div>
     <div class="input-group">
-      <input type="text" id="message" placeholder="Type a message..." />
+      <input type="text" id="message" placeholder="Type a message..."/>
       <button class="send-btn" onclick="sendMessage()">Send</button>
     </div>
   </div>
@@ -178,14 +203,14 @@
     };
 
     function updateUserInfo(user) {
-      let infoDiv = document.getElementById("user-info");
+      const infoDiv = document.getElementById("user-info");
       infoDiv.innerHTML = "";
       if (user.photoURL) {
-        let img = document.createElement("img");
+        const img = document.createElement("img");
         img.src = user.photoURL;
         infoDiv.appendChild(img);
       }
-      let span = document.createElement("span");
+      const span = document.createElement("span");
       span.innerText = `Signed in as: ${user.displayName}`;
       infoDiv.appendChild(span);
     }
@@ -209,18 +234,22 @@
       }
     };
 
-    const chatBox = document.getElementById("chat-box");
+    // Listen for new messages
     onChildAdded(ref(database, "messages"), (snapshot) => {
       const msg = snapshot.val();
+      const chatBox = document.getElementById("chat-box");
       const messageEl = document.createElement("div");
       messageEl.className = "message";
-      messageEl.innerHTML = `<strong>${msg.user}:</strong> ${msg.text}
-        <div class="timestamp">${new Date(msg.timestamp).toLocaleTimeString()}</div>`;
+      messageEl.innerHTML = `
+        <strong>${msg.user}:</strong> ${msg.text}
+        <div class="timestamp">${new Date(msg.timestamp).toLocaleTimeString()}</div>
+      `;
       chatBox.appendChild(messageEl);
       chatBox.scrollTop = chatBox.scrollHeight;
     });
 
-    document.getElementById("message").addEventListener("keypress", function (e) {
+    // Send message on Enter key
+    document.getElementById("message").addEventListener("keypress", (e) => {
       if (e.key === "Enter") {
         sendMessage();
       }
