@@ -132,6 +132,7 @@
       display: flex;
       align-items: center;
       margin: 10px;
+      position: relative;
     }
     #message {
       flex: 1;
@@ -177,9 +178,7 @@
       text-align: left;
       cursor: pointer;
     }
-    #attachment-menu button:hover {
-      background: #f1f1f1;
-    }
+    #attachment-menu button:hover { background: #f1f1f1; }
     @media (max-width: 500px) {
       header h2 { font-size: 1.2em; }
       #user-pic { width: 35px; height: 35px; }
@@ -242,7 +241,7 @@
   <!-- Chat container -->
   <div class="chat-container">
     <div id="chat-box"></div>
-    <div class="input-group" style="position: relative;">
+    <div class="input-group">
       <button class="attach-btn" onclick="toggleAttachmentMenu(event)">📎</button>
       <input type="text" id="message" placeholder="Type a message..." />
       <button class="send-btn" onclick="sendMessage()">Send</button>
@@ -350,16 +349,14 @@
       }
       const messageInput = document.getElementById("message");
       const messageText = messageInput.value.trim();
+      if (!messageText) return;
       let msgObj = {
+        type: "text",
+        text: messageText,
         user: currentUser.displayName,
+        uid: currentUser.uid,
         timestamp: Date.now()
       };
-      if (messageText !== "") {
-        msgObj.type = "text";
-        msgObj.text = messageText;
-      } else {
-        return;
-      }
       const messagesRef = ref(database, "messages");
       const newMessageRef = push(messagesRef);
       await set(newMessageRef, msgObj);
@@ -370,13 +367,15 @@
       const msg = snapshot.val();
       const chatBox = document.getElementById("chat-box");
       const messageEl = document.createElement("div");
-      // Determine message alignment based on sender
-      if (currentUser && msg.user === currentUser.displayName) {
-        messageEl.className = "message sent";
+      // Determine message alignment using uid if available
+      if (currentUser && msg.uid) {
+        messageEl.className = (msg.uid === currentUser.uid) ? "message sent" : "message received";
+      } else if (currentUser) {
+        messageEl.className = (msg.user === currentUser.displayName) ? "message sent" : "message received";
       } else {
         messageEl.className = "message received";
       }
-      // Render based on message type
+      // Render message based on type
       if (msg.type === "text") {
         messageEl.innerHTML = `<strong>${msg.user}:</strong> ${msg.text}
           <div class="timestamp">${new Date(msg.timestamp).toLocaleTimeString()}</div>`;
@@ -386,9 +385,7 @@
           <div class="timestamp">${new Date(msg.timestamp).toLocaleTimeString()}</div>`;
       } else if (msg.type === "document") {
         messageEl.innerHTML = `<strong>${msg.user}:</strong><br>
-          <a href="${msg.url}" target="_blank" style="text-decoration:none;">
-            📄 ${msg.docName || "Document"}
-          </a>
+          <a href="${msg.url}" target="_blank" style="text-decoration:none;">📄 ${msg.docName || "Document"}</a>
           <div class="timestamp">${new Date(msg.timestamp).toLocaleTimeString()}</div>`;
       }
       chatBox.appendChild(messageEl);
@@ -434,7 +431,6 @@
       document.getElementById("document-upload").click();
     };
     
-    // Handle image file upload
     document.getElementById("image-upload").addEventListener("change", async function(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -448,6 +444,7 @@
           type: "image",
           url: downloadURL,
           user: currentUser.displayName,
+          uid: currentUser.uid,
           timestamp: Date.now()
         });
       } catch (error) {
@@ -455,7 +452,6 @@
       }
     });
     
-    // Handle document file upload
     document.getElementById("document-upload").addEventListener("change", async function(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -470,6 +466,7 @@
           url: downloadURL,
           docName: file.name,
           user: currentUser.displayName,
+          uid: currentUser.uid,
           timestamp: Date.now()
         });
       } catch (error) {
